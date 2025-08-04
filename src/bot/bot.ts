@@ -4,6 +4,7 @@
  */
 
 import { Bot } from "grammy";
+import type { InputMediaPhoto, InputMediaVideo } from "grammy/types";
 import dotenv from "dotenv";
 import { UploadSessionManager } from "../utils/upload-session.js";
 import { DatabaseManager } from "../utils/database.js";
@@ -54,12 +55,65 @@ bot.command("start", async (ctx) => {
 bot.command("get", async (ctx) => {
     try {
         const user = ctx.from;
-        console.log(`用户 ${user?.username || user?.first_name}(ID ${user?.id})执行了 /Get 命令  `);
-        await ctx.reply(``);
-    } catch (error) {
+        console.log(`用户 ${user?.username || user?.first_name}(ID ${user?.id})执行了 /get 命令`);
 
+        const text = ctx.match?.trim();
+        const id = Number(text);
+        if (!text || isNaN(id)) {
+            await ctx.reply("❗ 请在命令后输入有效的资料编号，例如：/get 12");
+            return;
+        }
+
+        const resource = await db.getResourceById(id);
+        if (!resource) {
+            await ctx.reply("未找到该编号的资料");
+            return;
+        }
+
+        const medias = JSON.parse(resource.mediaFiles);
+        const mediaGroup: (InputMediaPhoto | InputMediaVideo)[] = [];
+
+        medias.forEach((item: any, index: number) => {
+            if (item.photo && item.photo.length > 0) {
+                const fileId = item.photo[item.photo.length - 1].fileId;
+                const media: InputMediaPhoto = {
+                    type: "photo",
+                    media: fileId,
+                };
+                if (index === 0 && resource.caption) {
+                    media.caption = resource.caption;
+                }
+                mediaGroup.push(media);
+            } else if (item.video) {
+                const fileId = item.video.fileId;
+                const media: InputMediaVideo = {
+                    type: "video",
+                    media: fileId,
+                };
+                if (index === 0 && resource.caption) {
+                    media.caption = resource.caption;
+                }
+                mediaGroup.push(media);
+            }
+        });
+
+        if (mediaGroup.length > 0) {
+            await ctx.replyWithMediaGroup(mediaGroup);
+        }
+
+        if (resource.videoFile) {
+            const videoData = JSON.parse(resource.videoFile);
+            if (videoData?.video?.fileId) {
+                await ctx.replyWithVideo(videoData.video.fileId, {
+                    caption: videoData.caption || "验证视频",
+                });
+            }
+        }
+    } catch (error) {
+        console.error("处理 /get 命令时出错:", error);
+        await ctx.reply("抱歉，查询资料时发生错误，请稍后再试。");
     }
-})
+});
 
 
 
