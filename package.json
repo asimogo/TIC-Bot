@@ -1,0 +1,30 @@
+{
+  "name": "tic-bot",
+  "version": "1.0.0",
+  "description": "基于grammy框架的Telegram机器人",
+  "main": "dist/bot/bot.js",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "tsc-watch": "^7.1.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "grammy": "^1.37.0",
+    "mysql2": "^3.14.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/bot/bot.js",
+    "dev": "nodemon",
+    "dev:direct": "tsx src/bot/bot.ts",
+    "dev:watch": "tsc-watch --onSuccess \"node dist/bot/bot.js\"",
+    "dev:build": "tsc-watch --noClear",
+    "clean": "rm -rf dist",
+    "setup-db": "tsx scripts/setup-database.js"
+  }
+}
